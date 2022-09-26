@@ -1,0 +1,39 @@
+From manikanta gaddam to Everyone 09:13 PM
+pipeline {
+agent any
+parameters { choice(name: 'branchname', choices: ['master', 'mani_dev', 'mani_test'], description: '') }
+stages {
+stage("clone"){
+steps {
+git branch: "${params.branchname}", url: 'https://github.com/mani5a3/game-of-life.git'
+}
+}
+stage("build"){
+steps {
+bat 'mvn package'
+}
+}
+
+stage("jfrog"){
+steps {
+script {
+def SERVER_ID = 'artifactory'
+def server = Artifactory.server SERVER_ID
+def uploadSpec = """{
+    "files": [
+        {
+            "pattern": "gameoflife-web/target/*.war",
+            "target": "example-repo-local"
+        },
+		        {
+            "pattern": "gameoflife-core/target/*.jar",
+            "target": "example-repo-local"
+        }
+    ]
+}"""
+server.upload(uploadSpec)
+}
+}
+}
+}
+}
